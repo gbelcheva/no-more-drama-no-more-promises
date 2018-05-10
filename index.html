@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>No More Pain, No More Promises</title>
+  <meta charset="utf-8">
+  <meta name=viewport content="width=device-width, initial-scale=1">
+  <meta name="description" content="A presentation about writing JavaScript async code" />
+  <link rel="stylesheet" href="build/bundle.css" />
+  <link rel="stylesheet" href="css/theme/sky_mod.css" />
+</head>
+
+<body>
+  <div id="presentation" class="reveal">
+    <div class="slides">
+      <section id="title">
+        <h3>No More Drama, No More Promises</h3>
+        <h6 class="fragment">Awaiting the Bright Future</h6>
+      </section>
+      <section id="intro">
+        <section>
+          <h3>In this L&L:</h3>
+          <ul>
+            <li class="fragment">JavaScript internals</li>
+            <li class="fragment">Promises are mostly cool</li>
+            <li class="fragment">Generators are cool</li>
+            <li class="fragment">Coroutines look good and work well</li>
+          </ul>
+        </section>
+      </section>
+      <section id="basic-concurrency" class="stack present">
+        <section>
+          <h3>Concurrency Concepts</h3>
+          <ul>
+            <li class="fragment">
+              Tasks are executed
+              <ul>
+                <li class="fragment">Synchronously, blocking</li>
+                <li class="fragment">Asynchronously, non-blocking</li>
+              </ul>
+            </li>
+            <li class="fragment">
+              Concurrency types
+              <ul>
+                <li class="fragment">Preemptive - lower priority tasks can be interrupted by more important tasks</li>
+                <li class="fragment">Cooperative - tasks run to completion, but can yield control</li>
+              </ul>
+            </li>
+            <li class="fragment">Concurrency is not parallelism</li>
+            <div class="fragment">Concurrency is "dealing with lots of things at once", parallelism is "doing lots of things at once"</div>
+          </ul>
+        </section>
+      </section>
+      <section id="js-concurrency" class="stack present">
+        <section>
+          <h3>JS Concurrency and Event Loop</h3>
+          <ul>
+            <li class="fragment">Single threaded</li>
+            <li class="fragment">Cooperative concurrency model</li>
+            <li class="fragment">Synchronous event loop</li>
+            <li class="fragment">Tasks run to completion</li>
+            <li class="fragment">Callbacks can be scheduled synchronously (forEach, map, reduce) or asynchronously (setTimeout)</li>
+            <li class="fragment">Macrotasks and microtasks</li>
+            <div class="fragment">All tasks are equal, but some tasks are more equal than others</div>
+          </ul>
+        </section>
+      </section>
+      <section id="simple-event-loop" class="stack present">
+        <section>
+          <h3>Event Loop Concepts</h3>
+          <ul>
+            <li class="fragment">Call Stack - records function calls</li>
+            <li class="fragment">Event Queue - FIFO list of tasks</li>
+            <li class="fragment">Event Table - tracks callbacks and their triggers</li>
+            <li class="fragment">Event Loop - constantly tracks the Call Stack and the Event Queue</li>
+            <li class="fragment">Heap - unstructured memory for variables and objects allocation</li>
+          </ul>
+        </section>
+      </section>
+      <section id="simple-event-loop-demo" class="stack present">
+        <section>
+          <h3>Simple Event Loop Demo</h3>
+          <img width="60%" height="100" src="images/event-loop-arrow-trans.png" class="event-image" />
+          <br>
+          <div class="left">
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+          </div>
+          <div class="center">
+            <pre><code class="js">
+(function() {
+  console.log(1);
+
+  setTimeout(function cb1() {
+    console.log(2);
+  }, 1000);
+
+  console.log(3);
+
+  setTimeout(function cb2() {
+    console.log(4);
+  }, 0);
+
+  console.log(5);
+})();
+
+console.log(6);
+              </code></pre>
+          </div>
+          <div class="right">
+            <div class="event-loop-inactive">
+              <div class="event-header">Call Stack</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Table</div>
+              <pre><code class="js">
+                </code></pre>
+            </div>
+          </div>
+          <img width="60%" height="100" src="images/event-arrow-trans.png" class="event-image" />
+        </section>
+        <section>
+          <h3>Simple Event Loop Demo</h3>
+          <img width="60%" height="100" src="images/event-loop-arrow-trans.png" class="event-image" />
+          <br>
+          <div class="left">
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Queue</div>
+              <pre><code class="js">
+script
+              </code></pre>
+            </div>
+          </div>
+          <div class="center">
+            <pre><code class="js">
+(function() {
+  console.log(1);
+
+  setTimeout(function cb1() {
+    console.log(2);
+  }, 1000);
+
+  console.log(3);
+
+  setTimeout(function cb2() {
+    console.log(4);
+  }, 0);
+
+  console.log(5);
+})();
+
+console.log(6);
+              </code></pre>
+          </div>
+          <div class="right">
+            <div class="event-loop-inactive">
+              <div class="event-header">Call Stack</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Table</div>
+              <pre><code class="js">
+                </code></pre>
+            </div>
+          </div>
+          <img width="60%" height="100" src="images/event-arrow-trans.png" class="event-image" />
+        </section>
+        <section>
+          <h3>Simple Event Loop Demo</h3>
+          <img width="60%" height="100" src="images/event-loop-arrow-trans.png" class="event-image" />
+          <br>
+          <div class="left">
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+          </div>
+          <div class="center">
+            <pre><code class="js">
+(function() {
+  console.log(1);
+
+  setTimeout(function cb1() {
+    console.log(2);
+  }, 1000);
+
+  console.log(3);
+
+  setTimeout(function cb2() {
+    console.log(4);
+  }, 0);
+
+  console.log(5);
+})();
+
+console.log(6);
+              </code></pre>
+          </div>
+          <div class="right">
+            <div class="event-loop-inactive">
+              <div class="event-header">Call Stack</div>
+              <pre><code class="js">
+    console.log(1)
+    setTimeout(cb1, 1000)
+    console.log(3)
+    setTimeout(cb2, 0)
+    console.log(5)
+  IIFE
+  console.log(6)
+script
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Table</div>
+              <pre><code class="js">
+                </code></pre>
+            </div>
+          </div>
+          <img width="60%" height="100" src="images/event-arrow-trans.png" class="event-image" />
+        </section>
+        <section>
+          <h3>Simple Event Loop Demo</h3>
+          <img width="60%" height="100" src="images/event-loop-arrow-trans.png" class="event-image" />
+          <br>
+          <div class="left">
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+          </div>
+          <div class="center">
+            <pre><code class="js">
+(function() {
+  console.log(1);
+
+  setTimeout(function cb1() {
+    console.log(2);
+  }, 1000);
+
+  console.log(3);
+
+  setTimeout(function cb2() {
+    console.log(4);
+  }, 0);
+
+  console.log(5);
+})();
+
+console.log(6);
+
+// 1, 3, 5, 6
+              </code></pre>
+          </div>
+          <div class="right">
+            <div class="event-loop-inactive">
+              <div class="event-header">Call Stack</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Table</div>
+              <pre><code class="js">
+cb1, 1000
+cb2, 0
+                </code></pre>
+            </div>
+          </div>
+          <img width="60%" height="100" src="images/event-arrow-trans.png" class="event-image" />
+        </section>
+        <section>
+          <h3>Simple Event Loop Demo</h3>
+          <img width="60%" height="100" src="images/event-loop-arrow-trans.png" class="event-image" />
+          <br>
+          <div class="left">
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Queue</div>
+              <pre><code class="js">
+cb2
+              </code></pre>
+            </div>
+          </div>
+          <div class="center">
+            <pre><code class="js">
+(function() {
+  console.log(1);
+
+  setTimeout(function cb1() {
+    console.log(2);
+  }, 1000);
+
+  console.log(3);
+
+  setTimeout(function cb2() {
+    console.log(4);
+  }, 0);
+
+  console.log(5);
+})();
+
+console.log(6);
+
+// 1, 3, 5, 6
+              </code></pre>
+          </div>
+          <div class="right">
+            <div class="event-loop-inactive">
+              <div class="event-header">Call Stack</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Table</div>
+              <pre><code class="js">
+cb1, 1000
+                </code></pre>
+            </div>
+          </div>
+          <img width="60%" height="100" src="images/event-arrow-trans.png" class="event-image" />
+        </section>
+        <section>
+          <h3>Simple Event Loop Demo</h3>
+          <img width="60%" height="100" src="images/event-loop-arrow-trans.png" class="event-image" />
+          <br>
+          <div class="left">
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+          </div>
+          <div class="center">
+            <pre><code class="js">
+(function() {
+  console.log(1);
+
+  setTimeout(function cb1() {
+    console.log(2);
+  }, 1000);
+
+  console.log(3);
+
+  setTimeout(function cb2() {
+    console.log(4);
+  }, 0);
+
+  console.log(5);
+})();
+
+console.log(6);
+
+// 1, 3, 5, 6
+              </code></pre>
+          </div>
+          <div class="right">
+            <div class="event-loop-inactive">
+              <div class="event-header">Call Stack</div>
+              <pre><code class="js">
+  console.log(4)
+cb2
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Table</div>
+              <pre><code class="js">
+cb1, 1000
+                </code></pre>
+            </div>
+          </div>
+          <img width="60%" height="100" src="images/event-arrow-trans.png" class="event-image" />
+        </section>
+        <section>
+          <h3>Simple Event Loop Demo</h3>
+          <img width="60%" height="100" src="images/event-loop-arrow-trans.png" class="event-image" />
+          <br>
+          <div class="left">
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Queue</div>
+              <pre><code class="js">
+cb1
+              </code></pre>
+            </div>
+          </div>
+          <div class="center">
+            <pre><code class="js">
+(function() {
+  console.log(1);
+
+  setTimeout(function cb1() {
+    console.log(2);
+  }, 1000);
+
+  console.log(3);
+
+  setTimeout(function cb2() {
+    console.log(4);
+  }, 0);
+
+  console.log(5);
+})();
+
+console.log(6);
+
+// 1, 3, 5, 6, 4
+              </code></pre>
+          </div>
+          <div class="right">
+            <div class="event-loop-inactive">
+              <div class="event-header">Call Stack</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Table</div>
+              <pre><code class="js">
+                </code></pre>
+            </div>
+          </div>
+          <img width="60%" height="100" src="images/event-arrow-trans.png" class="event-image" />
+        </section>
+        <section>
+          <h3>Simple Event Loop Demo</h3>
+          <img width="60%" height="100" src="images/event-loop-arrow-trans.png" class="event-image" />
+          <br>
+          <div class="left">
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+          </div>
+          <div class="center">
+            <pre><code class="js">
+(function() {
+  console.log(1);
+
+  setTimeout(function cb1() {
+    console.log(2);
+  }, 1000);
+
+  console.log(3);
+
+  setTimeout(function cb2() {
+    console.log(4);
+  }, 0);
+
+  console.log(5);
+})();
+
+console.log(6);
+
+// 1, 3, 5, 6, 4
+              </code></pre>
+          </div>
+          <div class="right">
+            <div class="event-loop-inactive">
+              <div class="event-header">Call Stack</div>
+              <pre><code class="js">
+  console.log(2)
+cb1
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Table</div>
+              <pre><code class="js">
+                </code></pre>
+            </div>
+          </div>
+          <img width="60%" height="100" src="images/event-arrow-trans.png" class="event-image" />
+        </section>
+        <section>
+          <h3>Simple Event Loop Demo</h3>
+          <img width="60%" height="100" src="images/event-loop-arrow-trans.png" class="event-image" />
+          <br>
+          <div class="left">
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+          </div>
+          <div class="center">
+            <pre><code class="js">
+(function() {
+  console.log(1);
+
+  setTimeout(function cb1() {
+    console.log(2);
+  }, 1000);
+
+  console.log(3);
+
+  setTimeout(function cb2() {
+    console.log(4);
+  }, 0);
+
+  console.log(5);
+})();
+
+console.log(6);
+
+// 1, 3, 5, 6, 4, 2
+              </code></pre>
+          </div>
+          <div class="right">
+            <div class="event-loop-inactive">
+              <div class="event-header">Call Stack</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Table</div>
+              <pre><code class="js">
+                </code></pre>
+            </div>
+          </div>
+          <img width="60%" height="100" src="images/event-arrow-trans.png" class="event-image" />
+        </section>
+      </section>
+      <section id="micro-macro-tasks" class="stack present">
+        <section>
+          <h3>Micro And Macro Tasks</h3>
+          <ul>
+            <li class="fragment">Macrotasks are the "ordinary" tasks in the event queue</li>
+            <li class="fragment">Microtasks have a separate event queue</li>
+            <li class="fragment">Microtasks priority > Macrotasks priority</li>
+            <li class="fragment">Tasks still run to completion without interruption</li>
+            <li class="fragment">Macrotask schedulers ex.: setTimeout, setInterval</li>
+            <li class="fragment">Microtask schedulers ex.: Promise, process.nextTick</li>
+          </ul>
+        </section>
+      </section>
+      <section id="event-loop-more-demo" class="stack present">
+        <section>
+          <h3>Event Loop Micro and Macro Tasks Demo</h3>
+          <img width="60%" height="100" src="images/event-loop-arrow-trans.png" class="event-image" />
+          <br>
+          <div class="left">
+            <div class="event-loop-inactive">
+              <div class="event-header">(Macrotasks) Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Microtasks Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+          </div>
+          <div class="center">
+            <pre><code class="js">
+console.log(1);
+
+setTimeout(function cb1() {
+  console.log(2);
+}, 0);
+
+console.log(3);
+
+Promise.resolve()
+  .then(function cb2() {
+    console.log(4);
+  })
+  .then(function cb3() {
+    console.log(5);
+  });
+
+console.log(6);
+              </code></pre>
+          </div>
+          <div class="right">
+            <div class="event-loop-inactive">
+              <div class="event-header">Call Stack</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Table</div>
+              <pre><code class="js">
+                </code></pre>
+            </div>
+          </div>
+          <img width="60%" height="100" src="images/event-arrow-trans.png" class="event-image" />
+        </section>
+        <section>
+          <h3>Event Loop Micro and Macro Tasks Demo</h3>
+          <img width="60%" height="100" src="images/event-loop-arrow-trans.png" class="event-image" />
+          <br>
+          <div class="left">
+            <div class="event-loop-inactive">
+              <div class="event-header">(Macrotasks) Event Queue</div>
+              <pre><code class="js">
+script
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Microtasks Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+          </div>
+          <div class="center">
+            <pre><code class="js">
+console.log(1);
+
+setTimeout(function cb1() {
+  console.log(2);
+}, 0);
+
+console.log(3);
+
+Promise.resolve()
+  .then(function cb2() {
+    console.log(4);
+  })
+  .then(function cb3() {
+    console.log(5);
+  });
+
+console.log(6);
+              </code></pre>
+          </div>
+          <div class="right">
+            <div class="event-loop-inactive">
+              <div class="event-header">Call Stack</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Table</div>
+              <pre><code class="js">
+                </code></pre>
+            </div>
+          </div>
+          <img width="60%" height="100" src="images/event-arrow-trans.png" class="event-image" />
+        </section>
+        <section>
+          <h3>Event Loop Micro and Macro Tasks Demo</h3>
+          <img width="60%" height="100" src="images/event-loop-arrow-trans.png" class="event-image" />
+          <br>
+          <div class="left">
+            <div class="event-loop-inactive">
+              <div class="event-header">(Macrotasks) Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Microtasks Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+          </div>
+          <div class="center">
+            <pre><code class="js">
+console.log(1);
+
+setTimeout(function cb1() {
+  console.log(2);
+}, 0);
+
+console.log(3);
+
+Promise.resolve()
+  .then(function cb2() {
+    console.log(4);
+  })
+  .then(function cb3() {
+    console.log(5);
+  });
+
+console.log(6);
+              </code></pre>
+          </div>
+          <div class="right">
+            <div class="event-loop-inactive">
+              <div class="event-header">Call Stack</div>
+              <pre><code class="js">
+  console.log(1)
+  setTimeout(cb1, 0)
+  console.log(3)
+  Promise.resolve()
+    .then(cb2)
+    .then(cb3)
+  console.log(6)
+script
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Table</div>
+              <pre><code class="js">
+                </code></pre>
+            </div>
+          </div>
+          <img width="60%" height="100" src="images/event-arrow-trans.png" class="event-image" />
+        </section>
+        <section>
+          <h3>Event Loop Micro and Macro Tasks Demo</h3>
+          <img width="60%" height="100" src="images/event-loop-arrow-trans.png" class="event-image" />
+          <br>
+          <div class="left">
+            <div class="event-loop-inactive">
+              <div class="event-header">(Macrotasks) Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Microtasks Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+          </div>
+          <div class="center">
+            <pre><code class="js">
+console.log(1);
+
+setTimeout(function cb1() {
+  console.log(2);
+}, 0);
+
+console.log(3);
+
+Promise.resolve()
+  .then(function cb2() {
+    console.log(4);
+  })
+  .then(function cb3() {
+    console.log(5);
+  });
+
+console.log(6);
+
+// 1, 3, 6
+              </code></pre>
+          </div>
+          <div class="right">
+            <div class="event-loop-inactive">
+              <div class="event-header">Call Stack</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Table</div>
+              <pre><code class="js">
+cb1, 0
+cb2, resolve
+cb3, cb2
+                </code></pre>
+            </div>
+          </div>
+          <img width="60%" height="100" src="images/event-arrow-trans.png" class="event-image" />
+        </section>
+        <section>
+          <h3>Event Loop Micro and Macro Tasks Demo</h3>
+          <img width="60%" height="100" src="images/event-loop-arrow-trans.png" class="event-image" />
+          <br>
+          <div class="left">
+            <div class="event-loop-inactive">
+              <div class="event-header">(Macrotasks) Event Queue</div>
+              <pre><code class="js">
+cb1
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Microtasks Event Queue</div>
+              <pre><code class="js">
+cb2
+              </code></pre>
+            </div>
+          </div>
+          <div class="center">
+            <pre><code class="js">
+console.log(1);
+
+setTimeout(function cb1() {
+  console.log(2);
+}, 0);
+
+console.log(3);
+
+Promise.resolve()
+  .then(function cb2() {
+    console.log(4);
+  })
+  .then(function cb3() {
+    console.log(5);
+  });
+
+console.log(6);
+
+// 1, 3, 6
+              </code></pre>
+          </div>
+          <div class="right">
+            <div class="event-loop-inactive">
+              <div class="event-header">Call Stack</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Table</div>
+              <pre><code class="js">
+cb3, cb2
+                </code></pre>
+            </div>
+          </div>
+          <img width="60%" height="100" src="images/event-arrow-trans.png" class="event-image" />
+        </section>
+        <section>
+          <h3>Event Loop Micro and Macro Tasks Demo</h3>
+          <img width="60%" height="100" src="images/event-loop-arrow-trans.png" class="event-image" />
+          <br>
+          <div class="left">
+            <div class="event-loop-inactive">
+              <div class="event-header">(Macrotasks) Event Queue</div>
+              <pre><code class="js">
+cb1
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Microtasks Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+          </div>
+          <div class="center">
+            <pre><code class="js">
+console.log(1);
+
+setTimeout(function cb1() {
+  console.log(2);
+}, 0);
+
+console.log(3);
+
+Promise.resolve()
+  .then(function cb2() {
+    console.log(4);
+  })
+  .then(function cb3() {
+    console.log(5);
+  });
+
+console.log(6);
+
+// 1, 3, 6
+              </code></pre>
+          </div>
+          <div class="right">
+            <div class="event-loop-inactive">
+              <div class="event-header">Call Stack</div>
+              <pre><code class="js">
+  console.log(4)
+cb2
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Table</div>
+              <pre><code class="js">
+cb3, cb2
+                </code></pre>
+            </div>
+          </div>
+          <img width="60%" height="100" src="images/event-arrow-trans.png" class="event-image" />
+        </section>
+        <section>
+          <h3>Event Loop Micro and Macro Tasks Demo</h3>
+          <img width="60%" height="100" src="images/event-loop-arrow-trans.png" class="event-image" />
+          <br>
+          <div class="left">
+            <div class="event-loop-inactive">
+              <div class="event-header">(Macrotasks) Event Queue</div>
+              <pre><code class="js">
+cb1
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Microtasks Event Queue</div>
+              <pre><code class="js">
+cb3
+              </code></pre>
+            </div>
+          </div>
+          <div class="center">
+            <pre><code class="js">
+console.log(1);
+
+setTimeout(function cb1() {
+  console.log(2);
+}, 0);
+
+console.log(3);
+
+Promise.resolve()
+  .then(function cb2() {
+    console.log(4);
+  })
+  .then(function cb3() {
+    console.log(5);
+  });
+
+console.log(6);
+
+// 1, 3, 6, 4
+              </code></pre>
+          </div>
+          <div class="right">
+            <div class="event-loop-inactive">
+              <div class="event-header">Call Stack</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Table</div>
+              <pre><code class="js">
+                </code></pre>
+            </div>
+          </div>
+          <img width="60%" height="100" src="images/event-arrow-trans.png" class="event-image" />
+        </section>
+        <section>
+          <h3>Event Loop Micro and Macro Tasks Demo</h3>
+          <img width="60%" height="100" src="images/event-loop-arrow-trans.png" class="event-image" />
+          <br>
+          <div class="left">
+            <div class="event-loop-inactive">
+              <div class="event-header">(Macrotasks) Event Queue</div>
+              <pre><code class="js">
+cb1
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Microtasks Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+          </div>
+          <div class="center">
+            <pre><code class="js">
+console.log(1);
+
+setTimeout(function cb1() {
+  console.log(2);
+}, 0);
+
+console.log(3);
+
+Promise.resolve()
+  .then(function cb2() {
+    console.log(4);
+  })
+  .then(function cb3() {
+    console.log(5);
+  });
+
+console.log(6);
+
+// 1, 3, 6, 4
+              </code></pre>
+          </div>
+          <div class="right">
+            <div class="event-loop-inactive">
+              <div class="event-header">Call Stack</div>
+              <pre><code class="js">
+  console.log(5)
+cb3
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Table</div>
+              <pre><code class="js">
+                </code></pre>
+            </div>
+          </div>
+          <img width="60%" height="100" src="images/event-arrow-trans.png" class="event-image" />
+        </section>
+        <section>
+          <h3>Event Loop Micro and Macro Tasks Demo</h3>
+          <img width="60%" height="100" src="images/event-loop-arrow-trans.png" class="event-image" />
+          <br>
+          <div class="left">
+            <div class="event-loop-inactive">
+              <div class="event-header">(Macrotasks) Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Microtasks Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+          </div>
+          <div class="center">
+            <pre><code class="js">
+console.log(1);
+
+setTimeout(function cb1() {
+  console.log(2);
+}, 0);
+
+console.log(3);
+
+Promise.resolve()
+  .then(function cb2() {
+    console.log(4);
+  })
+  .then(function cb3() {
+    console.log(5);
+  });
+
+console.log(6);
+
+// 1, 3, 6, 4, 5
+              </code></pre>
+          </div>
+          <div class="right">
+            <div class="event-loop-inactive">
+              <div class="event-header">Call Stack</div>
+              <pre><code class="js">
+  console.log(2)
+cb1
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Table</div>
+              <pre><code class="js">
+                </code></pre>
+            </div>
+          </div>
+          <img width="60%" height="100" src="images/event-arrow-trans.png" class="event-image" />
+        </section>
+        <section>
+          <h3>Event Loop Micro and Macro Tasks Demo</h3>
+          <img width="60%" height="100" src="images/event-loop-arrow-trans.png" class="event-image" />
+          <br>
+          <div class="left">
+            <div class="event-loop-inactive">
+              <div class="event-header">(Macrotasks) Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Microtasks Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+          </div>
+          <div class="center">
+            <pre><code class="js">
+console.log(1);
+
+setTimeout(function cb1() {
+  console.log(2);
+}, 0);
+
+console.log(3);
+
+Promise.resolve()
+  .then(function cb2() {
+    console.log(4);
+  })
+  .then(function cb3() {
+    console.log(5);
+  });
+
+console.log(6);
+
+// 1, 3, 6, 4, 5, 2
+              </code></pre>
+          </div>
+          <div class="right">
+            <div class="event-loop-inactive">
+              <div class="event-header">Call Stack</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Table</div>
+              <pre><code class="js">
+                </code></pre>
+            </div>
+          </div>
+          <img width="60%" height="100" src="images/event-arrow-trans.png" class="event-image" />
+        </section>
+      </section>
+      <section id="promises" class="stack present">
+        <section>
+          <h3>Promises</h3>
+          <ul>
+            <li class="fragment">A single operation will complete in the future</li>
+            <li class="fragment">Their callbacks are called asynchronously only after completion</li>
+            <li class="fragment">Callbacks can be added even after completion</li>
+            <li class="fragment">Async operations can be executed sequentially (chained) or in parallel (composition) <pre>Promise.then Promise.all Promise.race</pre></li>
+            <li class="fragment">Error handling <pre>Promise.catch</pre></li>
+            <li class="fragment">Start running on creation</li>
+          </ul>
+        </section>
+      </section>
+      <section id="promises-but" class="stack present">
+        <section>
+          <h3>But...</h3>
+          <img src="images/drama-trans.png" class="drama-image fragment" />
+          <div>Promises resolve with a single item</div>
+          <div class="center">
+            <pre><code class="js">
+router.get('/price_accuracy_market_average', (req, res) => {
+  const market = req.query.market.toUpperCase();
+  const websiteIds = req.query.website_ids.split(',');
+  const startDate = req.query.start_date;
+  const endDate = req.query.end_date;
+  let permittedWebsiteIds = null;
+
+  utils.getPermittedWebsiteIds(req, websiteIds)
+    .then((orgWebsiteIds) => {
+      permittedWebsiteIds = orgWebsiteIds;
+      if (!permittedWebsiteIds || permittedWebsiteIds.length === 0) {
+        res.sendStatus(403);
+        return Promise.reject(responseSent);
+      }
+      return utils.callPasti([market], [], [], startDate, endDate, ['website_id']);
+    })
+    .then((response) =>
+      res.json(utils.calculateMarketAverages(response.data.data, permittedWebsiteIds)))
+    .catch((error) => (error === responseSent ? Promise.resolve() : res.status(500)
+      .send(`Call to pasti failed with market: ${market}, website_ids: ${websiteIds},
+      start_date: ${startDate}, end_date: ${endDate}`)));
+});
+              </code></pre>
+          </div>
+        </section>
+        <section>
+          <h3>But...</h3>
+          <img src="images/drama-trans.png" class="drama-image fragment" />
+          <div>In a promise chain only the previous result is available</div>
+          <div class="center">
+            <pre><code class="js">
+router.get('/price_accuracy_market_average', (req, res) => {
+  const market = req.query.market.toUpperCase();
+  const websiteIds = req.query.website_ids.split(',');
+  const startDate = req.query.start_date;
+  const endDate = req.query.end_date;
+  let permittedWebsiteIds = null;
+
+  utils.getPermittedWebsiteIds(req, websiteIds)
+    .then((orgWebsiteIds) => {
+      permittedWebsiteIds = orgWebsiteIds;
+      if (!permittedWebsiteIds || permittedWebsiteIds.length === 0) {
+        res.sendStatus(403);
+        return Promise.reject(responseSent);
+      }
+      return utils.callPasti([market], [], [], startDate, endDate, ['website_id']);
+    })
+    .then((response) =>
+      res.json(utils.calculateMarketAverages(response.data.data, permittedWebsiteIds)))
+    .catch((error) => (error === responseSent ? Promise.resolve() : res.status(500)
+      .send(`Call to pasti failed with market: ${market}, website_ids: ${websiteIds},
+      start_date: ${startDate}, end_date: ${endDate}`)));
+});
+              </code></pre>
+          </div>
+        </section>
+        <section>
+          <h3>But...</h3>
+          <img src="images/drama-trans.png" class="drama-image fragment" />
+          <div>Results are bound to the scope of the promise</div>
+          <div>Non-reusable</div>
+        </section>
+      </section>
+      <section id="generators" class="stack present">
+        <section>
+          <h3>Generators</h3>
+          <div>Lazy generation of values</div>
+          <div class="center">
+            <pre><code class="js">
+function* zeroOneTwo() {
+  yeild 0;
+  yeild 1;
+  yeild 2;
+}
+
+for (var i of zeroOneTwo()) {
+  console.log(i);
+}
+
+// 0, 1, 2
+              </code></pre>
+          </div>
+          <div><b>yield</b> suspends the execution, but does not terminate it</div>
+        </section>
+      </section>
+      <section id="generators-demo" class="stack present">
+        <section>
+          <h3>Generators Demo</h3>
+          <img width="60%" height="100" src="images/event-loop-arrow-trans.png" class="event-image" />
+          <br>
+          <div class="left">
+            <div class="event-loop-inactive">
+              <div class="event-header">(Macrotasks) Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Microtasks Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+          </div>
+          <div class="center">
+            <pre><code class="js">
+function* generator() {
+  console.log(1);
+  yield;
+  console.log(2);
+  yield;
+}
+
+let iterator = generator();
+console.log(3);
+iterator.next();
+console.log(4);
+iterator.next();
+console.log(5);
+              </code></pre>
+          </div>
+          <div class="right">
+            <div class="event-loop-inactive">
+              <div class="event-header">Call Stack</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Table</div>
+              <pre><code class="js">
+                </code></pre>
+            </div>
+          </div>
+          <img width="60%" height="100" src="images/event-arrow-trans.png" class="event-image" />
+        </section>
+        <section>
+          <h3>Generators Demo</h3>
+          <img width="60%" height="100" src="images/event-loop-arrow-trans.png" class="event-image" />
+          <br>
+          <div class="left">
+            <div class="event-loop-inactive">
+              <div class="event-header">(Macrotasks) Event Queue</div>
+              <pre><code class="js">
+script
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Microtasks Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+          </div>
+          <div class="center">
+            <pre><code class="js">
+function* generator() {
+  console.log(1);
+  yield;
+  console.log(2);
+  yield;
+}
+
+let iterator = generator();
+console.log(3);
+iterator.next();
+console.log(4);
+iterator.next();
+console.log(5);
+              </code></pre>
+          </div>
+          <div class="right">
+            <div class="event-loop-inactive">
+              <div class="event-header">Call Stack</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Table</div>
+              <pre><code class="js">
+                </code></pre>
+            </div>
+          </div>
+          <img width="60%" height="100" src="images/event-arrow-trans.png" class="event-image" />
+        </section>
+        <section>
+          <h3>Generators Demo</h3>
+          <img width="60%" height="100" src="images/event-loop-arrow-trans.png" class="event-image" />
+          <br>
+          <div class="left">
+            <div class="event-loop-inactive">
+              <div class="event-header">(Macrotasks) Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Microtasks Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+          </div>
+          <div class="center">
+            <pre><code class="js">
+function* generator() {
+  console.log(1);
+  yield;
+  console.log(2);
+  yield;
+}
+
+let iterator = generator();
+console.log(3);
+iterator.next();
+console.log(4);
+iterator.next();
+console.log(5);
+              </code></pre>
+          </div>
+          <div class="right">
+            <div class="event-loop-inactive">
+              <div class="event-header">Call Stack</div>
+              <pre><code class="js">
+  console.log(3)
+    console.log(1)
+  iterator.next()
+  console.log(4)
+    console.log(2)
+  iterator.next()
+  console.log(5)
+script
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Table</div>
+              <pre><code class="js">
+                </code></pre>
+            </div>
+          </div>
+          <img width="60%" height="100" src="images/event-arrow-trans.png" class="event-image" />
+        </section>
+        <section>
+          <h3>Generators Demo</h3>
+          <img width="60%" height="100" src="images/event-loop-arrow-trans.png" class="event-image" />
+          <br>
+          <div class="left">
+            <div class="event-loop-inactive">
+              <div class="event-header">(Macrotasks) Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Microtasks Event Queue</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+          </div>
+          <div class="center">
+            <pre><code class="js">
+function* generator() {
+  console.log(1);
+  yield;
+  console.log(2);
+  yield;
+}
+
+let iterator = generator();
+console.log(3);
+iterator.next();
+console.log(4);
+iterator.next();
+console.log(5);
+
+// 3, 1, 4, 2, 5
+              </code></pre>
+          </div>
+          <div class="right">
+            <div class="event-loop-inactive">
+              <div class="event-header">Call Stack</div>
+              <pre><code class="js">
+              </code></pre>
+            </div>
+            <div class="event-loop-inactive">
+              <div class="event-header">Event Table</div>
+              <pre><code class="js">
+                </code></pre>
+            </div>
+          </div>
+          <img width="60%" height="100" src="images/event-arrow-trans.png" class="event-image" />
+        </section>
+      </section>
+      <section id="coroutines" class="stack present">
+        <section>
+          <h3>Coroutines</h3>
+          <div>Generators + Promises = ВНЛ</div>
+          <div>Asynchronous code written synchronously</div>
+        </section>
+        <section>
+          <h3>Coroutines</h3>
+          <div>Sequential processing</div>
+          <div class="center fragment">
+            <pre><code class="js">
+function sequential() {
+  return asyncOp1()
+    .then(asyncOp2)
+    .then(asyncOp3)
+    .then(asyncOp4);
+}
+
+let normySequential = sequential();
+              </code></pre>
+          </div>
+          <div class="center fragment">
+            <pre><code class="js">
+function* sequential() {
+  var v1 = yield asyncOp1();
+  var v2 = yield asyncOp2(v1);
+  var v3 = yield asyncOp3(v2);
+  return asyncOp4(v3);
+}
+
+let asyncSequential = async(sequential);
+             </code></pre>
+          </div>
+          <div class="center fragment">
+            <pre><code class="js">
+async function sequential() {
+  var v1 = await asyncOp1();
+  var v2 = await asyncOp2(v1);
+  var v3 = await asyncOp3(v2);
+  return asyncOp4(v3);
+}
+
+let asyncSequential = sequential();
+             </code></pre>
+          </div>
+          <div class="center fragment">
+            <pre><code class="js">
+async(sequential) ==
+
+function async(sequential) {
+  let iterator = sequential();
+  return iterator.next()
+    .then(res => iterator.next(res))
+    .then(res => iterator.next(res))
+    .then(res => iterator.next(res));
+}
+             </code></pre>
+          </div>
+        </section>
+        <section>
+          <h3>Coroutines</h3>
+          <div>Sequential processing</div>
+          <div class="center">
+            <pre><code class="js">
+function sequential() {
+  var v1, v2;
+  return asyncOp1()
+    .then(res => {
+      v1 = res;
+      return asyncOp2(res);
+    })
+    .then(res => {
+      v2 = res;
+      return asyncOp3(res);
+    })
+    .then(res => {
+      return asyncOp4(v1, v2, res);
+    });
+}
+
+let normySequential = sequential();
+              </code></pre>
+          </div>
+          <div class="center fragment">
+            <pre><code class="js">
+function* sequential() {
+  var v1 = yield asyncOp1();
+  var v2 = yield asyncOp2(v1);
+  var v3 = yield asyncOp3(v2);
+  return asyncOp4(v1, v2, v3);
+}
+
+let asyncSequential = async(sequential);
+             </code></pre>
+          </div>
+          <div class="center fragment">
+            <pre><code class="js">
+async function sequential() {
+  var v1 = await asyncOp1();
+  var v2 = await asyncOp2(v1);
+  var v3 = await asyncOp3(v2);
+  return asyncOp4(v1, v2, v3);
+}
+
+let asyncSequential = sequential();
+             </code></pre>
+          </div>
+          <img src="images/red-cross-trans.png" class="red-cross-image fragment" />
+          <div class="fragment">Values are accessible outside the promise chain</div>
+        </section>
+        <section>
+          <h3>Coroutines</h3>
+          <div>Parallel processing</div>
+          <div class="center">
+            <pre><code class="js">
+function parallel() {
+  var p1 = asyncOp1();
+  var p2 = asyncOp2();
+  var p3 = asyncOp3();
+  var p4 = asyncOp3();
+  return Promise.all([p1, p2, p3, p4]);
+}
+
+let normyParallel = parallel();
+              </code></pre>
+          </div>
+          <div class="center">
+            <pre><code class="js">
+function* parallel() {
+  var p1 = asyncOp1();
+  var p2 = asyncOp2();
+  var p3 = asyncOp3();
+  var p4 = asyncOp3();
+  return [yield p1, yield p2, yield p3, yield p4];
+}
+
+let asyncParallel = async(parallel);
+             </code></pre>
+          </div>
+          <div class="center">
+            <pre><code class="js">
+async function parallel() {
+  var p1 = asyncOp1();
+  var p2 = asyncOp2();
+  var p3 = asyncOp3();
+  var p4 = asyncOp3();
+  return [await p1, await p2, await p3, await p4];
+}
+
+let asyncParallel = parallel();
+             </code></pre>
+          </div>
+        </section>
+      </section>
+      <section id="coroutines-vs-promises" class="stack present">
+        <section>
+          <h3>Async/Await vs. Promises</h3>
+          <ul>
+            <li class="fragment">More concise and clear</li>
+            <li class="fragment">Error handling with try/catch</li>
+            <li class="fragment">All return values accessible thanks to generators</li>
+            <li class="fragment">Await == Then, but without callbacks</li>
+            <li class="fragment">Async code is written synchronously</li>
+            <li class="fragment">Both native, but Async/Await still needs transpiling</li>
+            <li class="fragment">Top level Await can be a footgun</li>
+            <li class="fragment">Await cannot be nested in another function</li>
+          </ul>
+        </section>
+      </section>
+      <section id="recap">
+        <h3>Recap</h3>
+        <div class="fragment">No more pain</div>
+        <div class="fragment">No more game</div>
+        <div class="fragment">No drama</div>
+        <img src="images/mary-drama.png" class="fragment" />
+      </section>
+      <section id="thanks">
+        <h3>Stay drama-free and thank you!</h3>
+        <img width="40%" src="images/cat-drama.png" />
+      </section>
+    </div>
+  </div>
+  <script src="build/bundle.js"></script>
+  <script>
+    (function(i, s, o, g, r, a, m) {
+      i['GoogleAnalyticsObject'] = r;
+      i[r] = i[r] || function() {
+        (i[r].q = i[r].q || []).push(arguments)
+      }, i[r].l = 1 * new Date();
+      a = s.createElement(o),
+        m = s.getElementsByTagName(o)[0];
+      a.async = 1;
+      a.src = g;
+      m.parentNode.insertBefore(a, m)
+    })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
+
+    ga('create', 'UA-93032616-1', 'auto');
+    ga('send', 'pageview');
+  </script>
+</body>
+
+</html>

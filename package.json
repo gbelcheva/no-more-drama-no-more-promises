@@ -1,0 +1,22 @@
+{
+  "name": "no_more_drama_no_more_promises",
+  "version": "0.0.1",
+  "description": "No More Drama, No More Promises",
+  "main": "index.html",
+  "scripts": {
+    "bower_install": "./node_modules/.bin/bower install",
+    "build": "./node_modules/.bin/gulp"
+  },
+  "homepage": "",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "author": "Gergana Belcheva",
+  "license": "ISC",
+  "devDependencies": {
+    "bower": "^1.8.0",
+    "gulp": "^3.9.1",
+    "gulp-concat": "^2.6.1"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "no_more_drama_no_more_promises",
+  "description": "No More Drama, No More Promises",
+  "main": "index.html",
+  "authors": [
+    "Gergana Belcheva"
+  ],
+  "license": "ISC",
+  "homepage": "",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "reveal.js": "^3.4.1"
+  }
+}
