@@ -1,6 +1,6 @@
 # No More Pain, No More Promises
 
-[https://rawgit.com/gbelcheva/no-more-drama-no-more-promises/master/index.html](https://rawgit.com/gbelcheva/no-more-drama-no-more-promises/master/index.html)
+[https://gbelcheva.github.io/no-more-drama-no-more-promises/](https://gbelcheva.github.io/no-more-drama-no-more-promises/)
 
 A presentation about writing JavaScript async code
 
